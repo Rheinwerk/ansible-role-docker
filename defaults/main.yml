@@ -8,7 +8,7 @@ docker__state: "present"
 docker__compose_version: ""
 docker__compose_v2_version: ""
 
-docker__users: ["{{ ansible_env.SUDO_USER | d('root') }}"]
+docker__users: []
 
 docker__login_become_user: "{{ docker__users | first | d('root') }}"
 
@@ -22,13 +22,13 @@ docker__default_daemon_json: |
 
 docker__daemon_json: ""
 
-docker__daemon_flags:
-  - "-H unix://"
+docker__daemon_flags: []
 
 docker__daemon_environment: []
 
 docker__systemd_override: ""
 
+docker__cron_jobs_enable: false
 docker__cron_jobs_prune_flags: "af"
 docker__cron_jobs_prune_schedule: ["0", "0", "*", "*", "0"]
 docker__cron_jobs:
@@ -57,7 +57,7 @@ docker__apt_key_url: "https://download.docker.com/linux/{{ ansible_distribution 
 docker__apt_repository: >
   deb [arch={{ docker__architecture_map[ansible_architecture] }}]
   https://download.docker.com/linux/{{ ansible_distribution | lower }}
-  {{ ansible_distribution_release }} {{ docker__channel | join (' ') }}
+  {{ ansible_distribution_release }} {{ docker__channel | join(' ') }}
 
 docker__pip_dependencies:
   - "gcc"
@@ -66,7 +66,8 @@ docker__pip_dependencies:
   - "python3-pip"
   - "virtualenv"
 
-docker__pip_virtualenv: "/usr/local/lib/docker/virtualenv"
+docker__pip_virtualenv: false
+docker__pip_virtualenv_path: "/usr/local/lib/docker/virtualenv"
 
 docker__default_pip_packages:
   - name: "docker"
@@ -74,7 +75,7 @@ docker__default_pip_packages:
   - name: "docker-compose"
     version: "{{ docker__compose_version }}"
     path: "/usr/local/bin/docker-compose"
-    src: "{{ docker__pip_virtualenv + '/bin/docker-compose' }}"
+    src: "{{ docker__pip_virtualenv_path + '/bin/docker-compose' }}"
     state: "{{ docker__pip_docker_compose_state }}"
 docker__pip_packages: []
 

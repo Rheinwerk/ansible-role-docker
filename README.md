@@ -1,4 +1,6 @@
-## What is ansible-docker? ![CI](https://github.com/nickjj/ansible-docker/workflows/CI/badge.svg?branch=master)
+Forked from: https://github.com/nickjj/ansible-docker
+
+## What is ansible-docker?
 
 It is an [Ansible](http://www.ansible.com/home) role to:
 
@@ -25,11 +27,6 @@ with it then check out
 - Ubuntu 22.04 LTS (Jammy Jellyfish)
 - Debian 10 (Buster)
 - Debian 11 (Bullseye)
-
----
-
-*You are viewing the master branch's documentation which might be ahead of the
-latest release. [Switch to the latest release](https://github.com/nickjj/ansible-docker/tree/v2.2.0).*
 
 ---
 
@@ -166,7 +163,7 @@ ansible all -m apt -a "name=docker-compose-plugin autoremove=true purge=true sta
 
 ### Installing Docker Compose v1
 
-Docker Compose v1 will get PIP installed inside of a Virtualenv. If you plan to
+Docker Compose v1 will get PIP installed inside of a Virtualenv, if `docker__pip_virtualenv` is true . If you plan to
 use Docker Compose v2 instead it will be very easy to skip installing v1
 although technically both can be installed together since v1 is accessed with
 `docker-compose` and v2 is accessed with `docker compose` (notice the lack of
@@ -212,11 +209,11 @@ it's worth knowing this up front. You can enable User Namespaces and any
 other options with the `docker__daemon_json` variable which is explained later.
 
 ```yml
+# Default: do not add any user to docker group
+docker__users: []
+
 # Try to use the sudo user by default, but fall back to root.
 docker__users: ["{{ ansible_env.SUDO_USER | d('root') }}"]
-
-# For example, if the user you want to set is different than the sudo user.
-docker__users: ["admin"]
 ```
 
 ### Configuring Docker registry logins
@@ -272,8 +269,7 @@ docker__daemon_json: ""
 ### Configure the Docker daemon options (flags)
 
 Flags that are set when starting the Docker daemon cannot be changed in the
-`daemon.json` file. By default Docker sets `-H unix://` which means that option
-cannot be changed with the json options.
+`daemon.json` file.
 
 Add or change the starting Docker daemon flags by supplying them exactly how
 they would appear on the command line.
@@ -286,8 +282,6 @@ they would appear on the command line.
 docker__daemon_flags:
   - "-H unix://"
 ```
-
-*If you don't supply some type of `-H` flag here, Docker will fail to start.*
 
 ### Configuring the Docker daemon environment variables
 
@@ -316,8 +310,7 @@ docker__systemd_override: ""
 
 ### Configuring Docker related cron jobs
 
-By default this will safely clean up disk space used by Docker every Sunday at
-midnight.
+If `docker__cron_jobs_enable` is set to true, a cronjob will safely clean up disk space used by Docker every Sunday at midnight.
 
 ```yml
 # `a` removes unused images (useful in production).
@@ -386,10 +379,11 @@ docker__apt_repository: >
 #### Configuring Virtualenv
 
 Rather than pollute your server's version of Python, all PIP packages are
-installed into a Virtualenv of your choosing.
+installed into a Virtualenv of your choosing, if `docker__pip_virtualenv` is set to true.
 
 ```yml
-docker__pip_virtualenv: "/usr/local/lib/docker/virtualenv"
+docker__pip_virtualenv: true
+docker__pip_virtualenv_path: "/usr/local/lib/docker/virtualenv"
 ```
 
 #### Installing PIP and its dependencies
@@ -416,7 +410,7 @@ docker__default_pip_packages:
   - name: "docker-compose"
     version: "{{ docker__compose_version }}"
     path: "/usr/local/bin/docker-compose"
-    src: "{{ docker__pip_virtualenv + '/bin/docker-compose' }}"
+    src: "{{ docker__pip_virtualenv_path + '/bin/docker-compose' }}"
     state: "{{ docker__pip_docker_compose_state }}"
 
 # Add your own PIP packages with the same properties as above.
