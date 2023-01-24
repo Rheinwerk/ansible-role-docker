@@ -261,7 +261,7 @@ docker__default_daemon_json:
 
 # Add your own additional daemon options without overriding the default options.
 # It follows the same format as the default options.
-docker__daemon_json: []
+docker__daemon_json: {}
 ```
 
 ### Configure the Docker daemon options (flags)
