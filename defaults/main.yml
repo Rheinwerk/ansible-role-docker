@@ -19,7 +19,7 @@ docker__default_daemon_json:
   features:
     buildkit: true
 
-docker__daemon_json: []
+docker__daemon_json: {}
 
 docker__daemon_flags: []
 
