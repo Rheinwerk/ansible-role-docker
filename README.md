@@ -251,19 +251,17 @@ docker__registries: []
 
 ### Configuring the Docker daemon options (json)
 
-Default Docker daemon options as they would appear in `/etc/docker/daemon.json`.
+Default Docker daemon options, will be placed into `/etc/docker/daemon.json`.
 
 ```yml
-docker__default_daemon_json: |
-  "log-driver": "journald",
-  "features": {
-    "buildkit": true
-  }
+docker__default_daemon_json:
+  log-driver: "journald"
+  features:
+    buildkit: true
 
 # Add your own additional daemon options without overriding the default options.
-# It follows the same format as the default options, and don't worry about
-# starting it off with a comma. The template will add the comma if needed.
-docker__daemon_json: ""
+# It follows the same format as the default options.
+docker__daemon_json: {}
 ```
 
 ### Configure the Docker daemon options (flags)

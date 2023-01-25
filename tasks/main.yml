@@ -58,6 +58,10 @@
     - "/etc/docker"
     - "/etc/systemd/system/docker.service.d"
 
+- name: Combine docker__default_daemon_json and docker__daemon_json
+  set_fact:
+    docker_final_daemon_opts: "{{ docker__default_daemon_json | combine(docker__daemon_json) }}"
+
 - name: Configure Docker daemon options (json)
   template:
     src: "etc/docker/daemon.json.j2"
