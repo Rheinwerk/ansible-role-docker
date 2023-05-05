@@ -69,6 +69,10 @@ docker__pip_virtualenv: false
 docker__pip_virtualenv_path: "/usr/local/lib/docker/virtualenv"
 
 docker__default_pip_packages:
+  # https://github.com/docker/docker-py/issues/3113
+  - name: "urllib3"
+    version: "1.26.15"
+    state: "{{ docker__pip_docker_state }}"
   - name: "docker"
     state: "{{ docker__pip_docker_state }}"
   - name: "docker-compose"
