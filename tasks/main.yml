@@ -1,19 +1,19 @@
 ---
 
 - name: Disable pinned Docker version
-  file:
+  ansible.builtin.file:
     dest: "/etc/apt/preferences.d/docker.pref"
     state: "absent"
   when: not docker__version | d()
 
 - name: Disable pinned Docker Compose v2 version
-  file:
+  ansible.builtin.file:
     dest: "/etc/apt/preferences.d/docker-compose-plugin.pref"
     state: "absent"
   when: not docker__compose_v2_version | d()
 
 - name: Enable pinned Docker version
-  template:
+  ansible.builtin.template:
     src: "etc/apt/preferences.d/docker.pref.j2"
     dest: "/etc/apt/preferences.d/docker.pref"
     owner: "root"
@@ -22,7 +22,7 @@
   when: docker__version | d()
 
 - name: Enable pinned Docker Compose v2 version
-  template:
+  ansible.builtin.template:
     src: "etc/apt/preferences.d/docker-compose-plugin.pref.j2"
     dest: "/etc/apt/preferences.d/docker-compose-plugin.pref"
     owner: "root"
@@ -33,22 +33,22 @@
 - name: Install Docker's dependencies
   retries: 20
   delay: 15
-  apt:
+  ansible.builtin.apt:
     name: "{{ docker__package_dependencies + docker__pip_dependencies }}"
     update_cache: true
 
 - name: Add Docker's public GPG key to the APT keyring
-  apt_key:
+  ansible.builtin.apt_key:
     id: "{{ docker__apt_key_id }}"
     url: "{{ docker__apt_key_url }}"
 
 - name: Configure Docker's upstream APT repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: "{{ docker__apt_repository }}"
     update_cache: true
 
 - name: Create Docker configuration directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: "directory"
     owner: "root"
@@ -59,11 +59,11 @@
     - "/etc/systemd/system/docker.service.d"
 
 - name: Combine docker__default_daemon_json and docker__daemon_json
-  set_fact:
+  ansible.builtin.set_fact:
     docker_final_daemon_opts: "{{ docker__default_daemon_json | combine(docker__daemon_json) }}"
 
 - name: Configure Docker daemon options (json)
-  template:
+  ansible.builtin.template:
     src: "etc/docker/daemon.json.j2"
     dest: "/etc/docker/daemon.json"
     owner: "root"
@@ -74,7 +74,7 @@
 - name: Install Docker and Docker Compose v2 # noqa args[module]
   retries: 20
   delay: 15
-  apt:
+  ansible.builtin.apt:
     name:
       - "docker-{{ docker__edition }}"
       - "docker-compose-plugin"
@@ -84,7 +84,7 @@
   when: docker__pip_virtualenv
   block:
     - name: Install Python packages # noqa args[module]
-      pip:
+      ansible.builtin.pip:
         name: >
           {{ item.name }}{% if item.version | d() %}=={{ item.version }}{% endif %}
         virtualenv: "{{ docker__pip_virtualenv_path }}"
@@ -94,7 +94,7 @@
       when: item.name | d()
 
     - name: Create python3-docker proxy script to access the Virtualenv's interpreter
-      template:
+      ansible.builtin.template:
         src: "usr/local/bin/python3-docker.j2"
         dest: "/usr/local/bin/python3-docker"
         owner: "root"
@@ -102,7 +102,7 @@
         mode: "0755"
 
     - name: Symlink selected Python package binaries to /usr/local/bin
-      file:
+      ansible.builtin.file:
         path: "{{ item.path }}"
         src: "{{ item.src }}"
         force: true
@@ -113,7 +113,7 @@
         - item.path | d() and item.src | d()
 
 - name: Install Python packages # noqa args[module]
-  pip:
+  ansible.builtin.pip:
     name: >
       {{ item.name }}{% if item.version | d() %}=={{ item.version }}{% endif %}
     state: "{{ item.state | d('present') }}"
@@ -125,14 +125,14 @@
     - item.name | d()
 
 - name: Add user(s) to "docker" group
-  user:
+  ansible.builtin.user:
     name: "{{ item }}"
     groups: "docker"
     append: true
   loop: "{{ docker__users }}"
 
 - name: Configure Docker daemon options (flags)
-  template:
+  ansible.builtin.template:
     src: "etc/systemd/system/docker.service.d/options.conf.j2"
     dest: "/etc/systemd/system/docker.service.d/options.conf"
     owner: "root"
@@ -141,7 +141,7 @@
   notify: ["Reload systemd daemon", "Restart Docker"]
 
 - name: Configure Docker daemon environment variables
-  template:
+  ansible.builtin.template:
     src: "etc/systemd/system/docker.service.d/environment.conf.j2"
     dest: "/etc/systemd/system/docker.service.d/environment.conf"
     owner: "root"
@@ -150,7 +150,7 @@
   notify: ["Reload systemd daemon", "Restart Docker"]
 
 - name: Configure custom systemd unit file override
-  template:
+  ansible.builtin.template:
     src: "etc/systemd/system/docker.service.d/custom.conf.j2"
     dest: "/etc/systemd/system/docker.service.d/custom.conf"
     owner: "root"
@@ -164,7 +164,7 @@
 # It's safe to ignore no-log-password because we're removing the password from
 # the output with the loop_control property.
 - name: Manage Docker registry login credentials
-  docker_login:  # noqa no-log-password
+  community.docker.docker_login:  # noqa no-log-password
     registry_url: "{{ item.registry_url | d(omit) }}"
     username: "{{ item.username }}"
     password: "{{ item.password }}"
@@ -182,7 +182,7 @@
     ansible_python_interpreter: "{{ '/usr/bin/env python3-docker' }}"
 
 - name: Remove Docker related cron jobs
-  file:
+  ansible.builtin.file:
     path: "/etc/cron.d/{{ item.cron_file }}"
     state: "absent"
   loop: "{{ docker__cron_jobs }}"
@@ -192,7 +192,7 @@
     - item.cron_file | d()
 
 - name: Create Docker related cron jobs
-  cron:
+  ansible.builtin.cron:
     name: "{{ item.name }}"
     job: "{{ item.job }}"
     minute: "{{ item.schedule[0] }}"
