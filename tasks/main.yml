@@ -159,7 +159,7 @@
   notify: ["Reload systemd daemon", "Restart Docker"]
 
 - name: Restart Docker now to make sure `docker login` works
-  meta: "flush_handlers"
+  ansible.builtin.meta: "flush_handlers"
 
 # It's safe to ignore no-log-password because we're removing the password from
 # the output with the loop_control property.
