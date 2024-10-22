@@ -42,13 +42,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - distro: ubuntu-20.04
+          - distro: debian-12
             ansible_scenario: ansible_current
             experimental: false
-          - distro: ubuntu-20.04
+          - distro: debian-12
             ansible_scenario: ansible_next
             experimental: true
-          - distro: ubuntu-22.04
+          - distro: debian-12
             ansible_scenario: ansible_latest
             experimental: true
 
