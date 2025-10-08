@@ -17,6 +17,9 @@ jobs:
       - name: Check out the codebase
         uses: actions/checkout@v4
 
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Pull Lint image
         run: docker pull -q ghcr.io/rheinwerk/molecule:lint
 
