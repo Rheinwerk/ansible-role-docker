@@ -4,13 +4,13 @@
   ansible.builtin.file:
     dest: "/etc/apt/preferences.d/docker.pref"
     state: "absent"
-  when: not docker__version | d()
+  when: not docker__version | d() | length > 0
 
 - name: Disable pinned Docker Compose v2 version
   ansible.builtin.file:
     dest: "/etc/apt/preferences.d/docker-compose-plugin.pref"
     state: "absent"
-  when: not docker__compose_v2_version | d()
+  when: not docker__compose_v2_version | d() | length > 0
 
 - name: Enable pinned Docker version
   ansible.builtin.template:
@@ -19,7 +19,7 @@
     owner: "root"
     group: "root"
     mode: "0644"
-  when: docker__version | d()
+  when: docker__version | d() | length > 0
 
 - name: Enable pinned Docker Compose v2 version
   ansible.builtin.template:
@@ -28,7 +28,7 @@
     owner: "root"
     group: "root"
     mode: "0644"
-  when: docker__compose_v2_version | d()
+  when: docker__compose_v2_version | d() | length > 0
 
 - name: Install Docker's dependencies
   retries: 20
@@ -92,7 +92,7 @@
         virtualenv_python: "python3"
         state: "{{ item.state | d('present') }}"
       loop: "{{ docker__default_pip_packages + docker__pip_packages }}"
-      when: item.name | d()
+      when: item.name | d() | length > 0
 
     - name: Create python3-docker proxy script to access the Virtualenv's interpreter
       ansible.builtin.template:
@@ -111,7 +111,7 @@
       loop: "{{ docker__default_pip_packages + docker__pip_packages }}"
       when:
         - item.state | d("present") != "absent"
-        - item.path | d() and item.src | d()
+        - item.path | d() | length > 0 and item.src | d() | length > 0
 
 - name: Install Python packages # noqa args[module]
   ansible.builtin.pip:
@@ -124,7 +124,7 @@
     PIP_ROOT_USER_ACTION: ignore
   when:
     - not docker__pip_virtualenv
-    - item.name | d()
+    - item.name | d() | length > 0
 
 - name: Add user(s) to "docker" group
   ansible.builtin.user:
@@ -177,7 +177,7 @@
   loop: "{{ docker__registries }}"
   loop_control:
     label: '{{ {"registry_url": item.registry_url | d("https://index.docker.io/v1/"), "username": item.username, "state": item.state | d("present")} }}'
-  when: item.username | d() and item.password | d()
+  when: item.username | d() | length > 0 and item.password | d() | length > 0
   become: true
   become_user: "{{ docker__login_become_user | d('root') }}"
   vars:
@@ -191,7 +191,7 @@
   when:
     - not docker__cron_jobs_enable
     - item.state | d("present") == "absent"
-    - item.cron_file | d()
+    - item.cron_file | d() | length > 0
 
 - name: Create Docker related cron jobs
   ansible.builtin.cron:
@@ -208,5 +208,5 @@
   when:
     - docker__cron_jobs_enable
     - item.state | d("present") != "absent"
-    - item.name | d() and item.job | d()
-    - item.schedule | d() and item.cron_file | d()
+    - item.name | d() | length > 0 and item.job | d() | length > 0
+    - item.schedule | d() | length > 0 and item.cron_file | d() | length > 0
