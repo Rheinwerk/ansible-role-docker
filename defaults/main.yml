@@ -1,6 +1,4 @@
 ---
-
-docker__edition: "ce"
 docker__channel: ["stable"]
 docker__version: ""
 docker__state: "present"
@@ -32,7 +30,7 @@ docker__cron_jobs_prune_flags: "af"
 docker__cron_jobs_prune_schedule: ["0", "0", "*", "*", "0"]
 docker__cron_jobs:
   - name: "Docker disk clean up"
-    job: "docker system prune -{{ docker__cron_jobs_prune_flags }} > /dev/null 2>&1"
+    job: "docker system prune -{{ docker__cron_jobs_prune_flags }} > /dev/null 2>&1" # yamllint disable-line rule:line-length
     schedule: "{{ docker__cron_jobs_prune_schedule }}"
     cron_file: "docker-disk-clean-up"
     user: "{{ (docker__users | first) | d('root') }}"
@@ -43,6 +41,21 @@ docker__package_dependencies:
   - "cron"
   - "gnupg2"
   - "software-properties-common"
+
+docker__architecture_map:
+  "x86_64": "amd64"
+  "aarch64": "arm64"
+  "aarch": "arm64"
+  "armhf": "armhf"
+  "armv7l": "armhf"
+
+docker__apt_repository_url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}" # yamllint disable-line rule:line-length
+docker__apt_key_checksum: "sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570" # yamllint disable-line rule:line-length
+docker__apt_repository: >
+  deb [arch={{ docker__architecture_map[ansible_architecture] }}
+  signed-by=/etc/apt/keyrings/docker.asc]
+  {{ docker__apt_repository_url }}
+  {{ ansible_distribution_release }} {{ docker__channel | join(' ') }}
 
 docker__pip_dependencies:
   - "gcc"

@@ -1,18 +1,16 @@
-Forked from: https://github.com/nickjj/ansible-docker
-
-## What is ansible-docker?
+## 🐳 What is ansible-docker?
 
 It is an [Ansible](http://www.ansible.com/home) role to:
 
-- Install Docker (editions, channels and version pinning are all supported)
-- Install Docker Compose v1 and Docker Compose v2 (version pinning is supported)
+- Install Docker (channels and version pinning are supported)
+- Install Docker Compose v2 (version pinning is supported)
 - Install the `docker` PIP package so Ansible's `docker_*` modules work
 - Manage Docker registry login credentials
 - Configure 1 or more users to run Docker without needing root access
 - Configure the Docker daemon's options and environment variables
 - Configure a cron job to run Docker clean up commands
 
-## Why would you want to use this role?
+## ❔ Why would you want to use this role?
 
 If you're like me, you probably love Docker. This role provides everything you
 need to get going with a production ready Docker host.
@@ -21,25 +19,32 @@ By the way, if you don't know what Docker is, or are looking to become an expert
 with it then check out
 [Dive into Docker: The Complete Docker Course for Developers](https://diveintodocker.com/?utm_source=ansibledocker&utm_medium=github&utm_campaign=readmetop).
 
-## Supported platforms
+## 🛟 Supported platforms
 
-- Ubuntu 20.04 LTS (Focal Fossa)
 - Ubuntu 22.04 LTS (Jammy Jellyfish)
-- Debian 10 (Buster)
+- Ubuntu 24.04 LTS (Noble Numbat)
 - Debian 11 (Bullseye)
+- Debian 12 (Bookworm)
+
+Previous releases may or may not work but they're not officially supported.
 
 ---
 
-## Quick start
+*You are viewing the master branch's documentation which might be ahead of the
+latest release. [Switch to the latest release](https://github.com/nickjj/ansible-docker/tree/v2.5.1).*
+
+---
+
+## ✨ Quick start
 
 The philosophy for all of my roles is to make it easy to get going, but provide
 a way to customize nearly everything.
 
 ### What's configured by default?
 
-The latest Docker CE, Docker Compose v1 and Docker Compose v2 will be
-installed, Docker disk clean up will happen once a week and Docker container
-logs will be sent to `journald`.
+The latest stable release of Docker CE and Docker Compose v2 will be installed,
+Docker disk clean up will happen once a week and Docker container logs will be
+sent to `journald`.
 
 ### Example playbook
 
@@ -63,22 +68,14 @@ Usage: `ansible-playbook docker.yml`
 
 `$ ansible-galaxy install nickjj.docker`
 
-## Default role variables
+## ⚙️ Default role variables
 
 ### Installing Docker
 
-#### Edition
-
-Do you want to use "ce" (community edition) or "ee" (enterprise edition)?
-
-```yml
-docker__edition: "ce"
-```
-
 #### Channel
 
-Do you want to use the "stable", "edge", "testing" or "nightly" channels? You
-can add more than one (order matters).
+Do you want to use the "stable" or "test" channel? You can add more than one
+(order matters).
 
 ```yml
 docker__channel: ["stable"]
@@ -92,11 +89,11 @@ docker__channel: ["stable"]
 ```yml
 docker__version: ""
 
-# For example, pin it to 20.10.
-docker__version: "20.10"
+# For example, pin it to 28.0.
+docker__version: "28.0"
 
-# For example, pin it to a more precise version of 20.10.
-docker__version: "20.10.17"
+# For example, pin it to a more precise version of 28.0.
+docker__version: "28.2.1"
 ```
 
 *Pins are set with `*` at the end of the package version so you will end up
@@ -139,11 +136,11 @@ and pinned
 ```yml
 docker__compose_v2_version: ""
 
-# For example, pin it to 2.6.
-docker__compose_v2_version: "2.6"
+# For example, pin it to 2.36.
+docker__compose_v2_version: "2.36"
 
-# For example, pin it to a more precise version of 2.6.
-docker__compose_v2_version: "2.6.0"
+# For example, pin it to a more precise version of 2.36.
+docker__compose_v2_version: "2.36.2"
 ```
 
 ##### Upgrade strategy
@@ -163,14 +160,19 @@ ansible all -m apt -a "name=docker-compose-plugin autoremove=true purge=true sta
 
 ### Installing Docker Compose v1
 
-Docker Compose v1 will get PIP installed inside of a Virtualenv, if `docker__pip_virtualenv` is true . If you plan to
-use Docker Compose v2 instead it will be very easy to skip installing v1
-although technically both can be installed together since v1 is accessed with
+By default this role doesn't install Docker Compose v1 since it's been
+officially deprecated and no longer receives updates by Docker. However, this
+role is capable of installing it. All you have to do is set
+`docker__pip_docker_compose_state: "present"` since this role defaults to
+`absent` for this value.
+
+Technically both versions can be installed together since v1 is accessed with
 `docker-compose` and v2 is accessed with `docker compose` (notice the lack of
 hyphen).
 
-In any case details about this is covered in detail in a later section of this
-README file.
+I'd suggest not installing v1 unless you really need it for legacy purposes. If
+you do decide to install it you can configure which version gets installed
+below. If it's not set to be installed these versions are left unused:
 
 #### Version
 
@@ -209,11 +211,11 @@ it's worth knowing this up front. You can enable User Namespaces and any
 other options with the `docker__daemon_json` variable which is explained later.
 
 ```yml
-# Default: do not add any user to docker group
-docker__users: []
-
 # Try to use the sudo user by default, but fall back to root.
 docker__users: ["{{ ansible_env.SUDO_USER | d('root') }}"]
+
+# For example, if the user you want to set is different than the sudo user.
+docker__users: ["admin"]
 ```
 
 ### Configuring Docker registry logins
@@ -251,23 +253,26 @@ docker__registries: []
 
 ### Configuring the Docker daemon options (json)
 
-Default Docker daemon options, will be placed into `/etc/docker/daemon.json`.
+Default Docker daemon options as they would appear in `/etc/docker/daemon.json`.
 
 ```yml
-docker__default_daemon_json:
-  log-driver: "journald"
-  features:
-    buildkit: true
+docker__default_daemon_json: |
+  "log-driver": "journald",
+  "features": {
+    "buildkit": true
+  }
 
 # Add your own additional daemon options without overriding the default options.
-# It follows the same format as the default options.
-docker__daemon_json: {}
+# It follows the same format as the default options, and don't worry about
+# starting it off with a comma. The template will add the comma if needed.
+docker__daemon_json: ""
 ```
 
 ### Configure the Docker daemon options (flags)
 
 Flags that are set when starting the Docker daemon cannot be changed in the
-`daemon.json` file.
+`daemon.json` file. By default Docker sets `-H unix://` which means that option
+cannot be changed with the json options.
 
 Add or change the starting Docker daemon flags by supplying them exactly how
 they would appear on the command line.
@@ -280,6 +285,8 @@ they would appear on the command line.
 docker__daemon_flags:
   - "-H unix://"
 ```
+
+*If you don't supply some type of `-H` flag here, Docker will fail to start.*
 
 ### Configuring the Docker daemon environment variables
 
@@ -308,7 +315,8 @@ docker__systemd_override: ""
 
 ### Configuring Docker related cron jobs
 
-If `docker__cron_jobs_enable` is set to true, a cronjob will safely clean up disk space used by Docker every Sunday at midnight.
+By default this will safely clean up disk space used by Docker every Sunday at
+midnight.
 
 ```yml
 # `a` removes unused images (useful in production).
@@ -359,17 +367,18 @@ docker__architecture_map:
   "armhf": "armhf"
   "armv7l": "armhf"
 
-# The Docker GPG key id used to sign the Docker package.
-docker__apt_key_id: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+# The Docker GPG key URL.
+docker__apt_repository_url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
 
-# The Docker GPG key server address.
-docker__apt_key_url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+# The Docker GPG key checksum value.
+docker__apt_key_checksum: "sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570"
 
 # The Docker upstream APT repository.
 docker__apt_repository: >
-  deb [arch={{ docker__architecture_map[ansible_architecture] }}]
-  https://download.docker.com/linux/{{ ansible_distribution | lower }}
-  {{ ansible_distribution_release }} {{ docker__channel | join (' ') }}
+  deb [arch={{ docker__architecture_map[ansible_architecture] }}
+  signed-by=/etc/apt/keyrings/docker.asc]
+  {{ docker__apt_repository_url }}
+  {{ ansible_distribution_release }} {{ docker__channel | join(' ') }}
 ```
 
 ### Installing Python packages with Virtualenv and PIP
@@ -377,11 +386,10 @@ docker__apt_repository: >
 #### Configuring Virtualenv
 
 Rather than pollute your server's version of Python, all PIP packages are
-installed into a Virtualenv of your choosing, if `docker__pip_virtualenv` is set to true.
+installed into a Virtualenv of your choosing.
 
 ```yml
-docker__pip_virtualenv: true
-docker__pip_virtualenv_path: "/usr/local/lib/docker/virtualenv"
+docker__pip_virtualenv: "/usr/local/lib/docker/virtualenv"
 ```
 
 #### Installing PIP and its dependencies
@@ -408,7 +416,7 @@ docker__default_pip_packages:
   - name: "docker-compose"
     version: "{{ docker__compose_version }}"
     path: "/usr/local/bin/docker-compose"
-    src: "{{ docker__pip_virtualenv_path + '/bin/docker-compose' }}"
+    src: "{{ docker__pip_virtualenv + '/bin/docker-compose' }}"
     state: "{{ docker__pip_docker_compose_state }}"
 
 # Add your own PIP packages with the same properties as above.
@@ -429,21 +437,12 @@ docker__pip_packages: []
 future runs
 - When set to `"forcereinstall"`, the package will always be (re)installed and
 updated on future runs
-- When set to `"absent"`, the package will be removed
+- When set to `"absent"`, the package will be skipped or removed
 
 ```yml
 docker__pip_docker_state: "present"
-docker__pip_docker_compose_state: "present"
+docker__pip_docker_compose_state: "absent"
 ```
-
-##### Skipping the installation of Docker Compose v1
-
-You can set `docker__pip_docker_compose_state: "absent"` in your inventory.
-That's it!
-
-Honestly, in the future I think this will be the default behavior. Since Docker
-Compsose v2 is still fairly new I wanted to ease into using v2. There's also no
-harm in having both installed together. You can pick which one to use.
 
 #### Working with Ansible's `docker_*` modules
 
@@ -452,13 +451,22 @@ use the other `docker_*` modules in your own roles. They are not going to work
 unless you instruct Ansible to use this role's Virtualenv.
 
 At either the inventory, playbook or task level you'll need to set
-`ansible_python_interpreter: "/usr/bin/env python3-docker"`. This works because
-this role creates a proxy script from the Virtualenv's Python binary to
+`ansible_python_interpreter: "/usr/local/bin/python3-docker"`. This works
+because this role creates a proxy script from the Virtualenv's Python binary to
 `python3-docker`.
 
 You can look at this role's `docker_login` task as an example on how to do it
 at the task level.
 
-## License
+## 👀 About the author
 
-MIT
+- Nick Janetakis | <https://nickjanetakis.com> | [@nickjanetakis](https://twitter.com/nickjanetakis)
+
+I'm a self taught developer and have been freelancing for the last ~20 years.
+You can read about everything I've learned along the way on my site at
+[https://nickjanetakis.com](https://nickjanetakis.com/).
+
+There's hundreds of [blog posts](https://nickjanetakis.com/blog) and a couple
+of [video courses](https://nickjanetakis.com/courses) on web development and
+deployment topics. I also have a [podcast](https://runninginproduction.com)
+where I talk with folks about running web apps in production.
