@@ -357,7 +357,6 @@ docker__package_dependencies:
   - "ca-certificates"
   - "cron"
   - "gnupg2"
-  - "software-properties-common"
 
 # Ansible identifies CPU architectures differently than Docker.
 docker__architecture_map:

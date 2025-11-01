@@ -42,7 +42,6 @@ docker__package_dependencies:
   - "ca-certificates"
   - "cron"
   - "gnupg2"
-  - "software-properties-common"
 
 docker__pip_dependencies:
   - "gcc"
