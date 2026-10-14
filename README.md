@@ -212,7 +212,7 @@ other options with the `docker__daemon_json` variable which is explained later.
 
 ```yml
 # Try to use the sudo user by default, but fall back to root.
-docker__users: ["{{ ansible_env.SUDO_USER | d('root') }}"]
+docker__users: ["{{ ansible_facts['env'].SUDO_USER | d('root') }}"]
 
 # For example, if the user you want to set is different than the sudo user.
 docker__users: ["admin"]
@@ -367,17 +367,17 @@ docker__architecture_map:
   "armv7l": "armhf"
 
 # The Docker GPG key URL.
-docker__apt_repository_url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
+docker__apt_repository_url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}"
 
 # The Docker GPG key checksum value.
 docker__apt_key_checksum: "sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570"
 
 # The Docker upstream APT repository.
 docker__apt_repository: >
-  deb [arch={{ docker__architecture_map[ansible_architecture] }}
+  deb [arch={{ docker__architecture_map[ansible_facts['architecture']] }}
   signed-by=/etc/apt/keyrings/docker.asc]
   {{ docker__apt_repository_url }}
-  {{ ansible_distribution_release }} {{ docker__channel | join(' ') }}
+  {{ ansible_facts['distribution_release'] }} {{ docker__channel | join(' ') }}
 ```
 
 ### Installing Python packages with Virtualenv and PIP
